@@ -1,12 +1,11 @@
-from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
+from langchain_ollama import ChatOllama
 
-load_dotenv()
-
-llm = ChatOpenAI(
-    model="gpt-4o-mini",
+llm = ChatOllama(
+    model="llama3.2"
 )
 
-response = llm.invoke("Explain LangChain in simple terms.")
+response = llm.invoke(
+    "Explain LangChain in simple terms."
+)
 
 print(response.content)
