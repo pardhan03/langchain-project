@@ -7,6 +7,12 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.output_parsers import CommaSeparatedListOutputParser
 from langchain_core.output_parsers import JsonOutputParser
 
+from pydantic import BaseModel, Field
+
+class Person(BaseModel):
+    name: str = Field(description="The person's name")
+    age: str = Field(description="The person's age")
+
 llm = ChatOllama(
     model="llama3.2"
 )
@@ -16,6 +22,8 @@ parser = StrOutputParser()
 list_parser = CommaSeparatedListOutputParser()
 
 json_parser = JsonOutputParser()
+
+pydantic_parser = JsonOutputParser(pydantic_object=Person)
 
 prompt = ChatPromptTemplate.from_template("List the three cities that start with letter {letter}")
 
@@ -108,3 +116,25 @@ json_chain = prompt_for_json_parser | llm | json_parser
 json_parser_response = json_chain.invoke({"text": "John Doe is 20 years old."})
 print(json_parser_response)
 print(type(json_parser_response))
+
+# Pydantic Class Parser
+
+pydantic_class_format_instructions = pydantic_parser.get_format_instructions()
+print(pydantic_class_format_instructions)
+
+template_for_pydantic_class_parser = "Extract the name and age from this text: {text}/n/n{json_format_instructions}"
+
+prompt_for_pydantic_class_parser = PromptTemplate(
+    template=template_for_pydantic_class_parser,
+    input_variables=["text"],
+    partial_variables={
+        "format_instructions": pydantic_class_format_instructions
+    }
+)
+
+# Create the Chain
+pydantic_class_parser_chain = prompt_for_pydantic_class_parser | llm | pydantic_parser
+
+pydantic_class_parser_response = pydantic_class_parser_chain.invoke({"text": "John Doe is 20 years old."})
+print(pydantic_class_parser_response)
+print(type(pydantic_class_parser_response))
