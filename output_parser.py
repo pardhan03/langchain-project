@@ -1,7 +1,11 @@
 from langchain_ollama import ChatOllama
+
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import PromptTemplate
+
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.output_parsers import CommaSeparatedListOutputParser
+from langchain_core.output_parsers import JsonOutputParser
 
 llm = ChatOllama(
     model="llama3.2"
@@ -10,6 +14,8 @@ llm = ChatOllama(
 parser = StrOutputParser()
 
 list_parser = CommaSeparatedListOutputParser()
+
+json_parser = JsonOutputParser()
 
 prompt = ChatPromptTemplate.from_template("List the three cities that start with letter {letter}")
 
@@ -66,6 +72,19 @@ list_prompt = ChatPromptTemplate.from_template("List three {item_type}. /n/n{for
 # partial - We can fill some value beforehand
 list_prompt_partial = list_prompt.partial(format_instructions=format_instructions)
 
+# JSON Parser
+
+json_format_instructions  = JsonOutputParser.get_format_instructions()
+print(json_format_instructions)
+
+# Defind the prompt template
+template_for_json_parser = "Extract the name and age from this text: {text}/n/n{json_format_instructions}"
+prompt_for_json_parser = PromptTemplate(
+    template=template_for_json_parser,
+    input_variables=["text"],
+    partial_variables=json_format_instructions
+)
+
 # Build the LCEL Chain
 list_chain = list_prompt_partial | llm | list_parser
 
@@ -82,3 +101,10 @@ result_list = list_chain.invoke({"item_type": "unique ai models"})
 
 # chain = prompt | llm | parser
 # result_str = chain.invoke({ "letter": "P"})
+
+# Build the LCEL Chain
+json_chain = prompt_for_json_parser | llm | json_parser
+
+json_parser_response = json_chain.invoke({"text": "John Doe is 20 years old."})
+print(json_parser_response)
+print(type(json_parser_response))
